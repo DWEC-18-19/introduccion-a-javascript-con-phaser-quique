@@ -11,17 +11,37 @@ var winningMessage;
 var won = false;
 var currentScore = 0;
 var winningScore = 100;
+var mochila = false;
 
 // add collectable items to the game
 function addItems() {
   items = game.add.physicsGroup();
+  createItem(760, 130, 'coin');
+  createItem(680, 380, 'coin');
+  createItem(500, 220, 'coin');
+  createItem(480, 160, 'coin');
   createItem(375, 300, 'coin');
+  createItem(300, 120, 'coin');
+  createItem(300, 430, 'coin');
+  createItem(200, 60, 'coin');
+  createItem(375, 520, 'poison');
+  createItem(500, 350, 'poison');
+  createItem(125, 50, 'star');
+  createItem(820, 590, 'jetpack');
 }
 
 // add platforms to the game
 function addPlatforms() {
   platforms = game.add.physicsGroup();
-  platforms.create(450, 150, 'platform');
+  platforms.create(400, 600, 'platform2');
+  platforms.create(160, 520, 'platform2');
+  platforms.create(680, 500, 'platform');
+  platforms.create(480, 400, 'platform');
+  platforms.create(160, 390, 'platform');
+  platforms.create(630, 330, 'platform2');
+  platforms.create(200, 230, 'platform');
+  platforms.create(550, 200, 'platform');
+  platforms.create(50, 100, 'platform2');
   platforms.setAll('body.immovable', true);
 }
 
@@ -42,44 +62,63 @@ function createBadge() {
 
 // when the player collects an item on the screen
 function itemHandler(player, item) {
+
   item.kill();
-  currentScore = currentScore + 10;
-  if (currentScore === winningScore) {
+  if (item.key == "poison") {
+    currentScore = currentScore - 10;
+  } else if (item.key == "star") {
+    currentScore = currentScore + 30;
+  } else if (item.key == "jetpack") {
+    player.loadTexture(playerjp.texture);
+    player.body.gravity.y = 350;
+  } else {
+    currentScore = currentScore + 10;
+  }
+  if (currentScore >= winningScore && !mochila) {
       createBadge();
+      mochila=true;
   }
 }
 
 // when the player collects the badge at the end of the game
 function badgeHandler(player, badge) {
+  console.log(badge);
   badge.kill();
   won = true;
 }
 
 // setup game when the web page loads
 window.onload = function () {
-  game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
+  game = new Phaser.Game(900, 650, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
   
   // before the game begins
   function preload() {
-    game.stage.backgroundColor = '#5db1ad';
+    game.stage.backgroundColor = '#7AF';
     
     //Load images
     game.load.image('platform', 'platform_1.png');
+    game.load.image('platform2', 'platform_2.png');
+
     
     //Load spritesheets
-    game.load.spritesheet('player', 'chalkers.png', 48, 62);
+    game.load.spritesheet('player', 'zombie.png', 46, 68);
+    game.load.spritesheet('playerjp', 'zombie-jetpack.png', 46, 68);
     game.load.spritesheet('coin', 'coin.png', 36, 44);
     game.load.spritesheet('badge', 'badge.png', 42, 54);
+    game.load.spritesheet('poison', 'poison.png', 32, 32);
+    game.load.spritesheet('star', 'star.png', 32, 32);
+    game.load.spritesheet('jetpack', 'jetpack.png', 38, 44);
   }
 
   // initial game set up
   function create() {
     player = game.add.sprite(50, 600, 'player');
+    playerjp = game.add.sprite(-50, -50, 'playerjp');
     player.animations.add('walk');
-    player.anchor.setTo(0.5, 1);
+    player.anchor.setTo(0.5, 0.5);
     game.physics.arcade.enable(player);
     player.body.collideWorldBounds = true;
-    player.body.gravity.y = 500;
+    player.body.gravity.y = 550;
 
     addItems();
     addPlatforms();
