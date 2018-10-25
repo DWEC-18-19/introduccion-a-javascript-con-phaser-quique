@@ -11,7 +11,11 @@ var winningMessage;
 var won = false;
 var currentScore = 0;
 var winningScore = 100;
-var mochila = false;
+var cBadge = false;
+var botaAlada = false;
+var tieneLlave = false;
+var saltoDoble = false;
+var cAbierto = false;
 
 // add collectable items to the game
 function addItems() {
@@ -27,7 +31,7 @@ function addItems() {
   createItem(375, 520, 'poison');
   createItem(500, 350, 'poison');
   createItem(125, 50, 'star');
-  createItem(820, 590, 'jetpack');
+  createItem(820, 590, 'llave');
 }
 
 // add platforms to the game
@@ -36,13 +40,22 @@ function addPlatforms() {
   platforms.create(400, 600, 'platform2');
   platforms.create(160, 520, 'platform2');
   platforms.create(680, 500, 'platform');
+  platforms.create(-110, 480, 'platform');
   platforms.create(480, 400, 'platform');
+  platforms.create(-110, 380, 'platform');
   platforms.create(160, 390, 'platform');
   platforms.create(630, 330, 'platform2');
   platforms.create(200, 230, 'platform');
   platforms.create(550, 200, 'platform');
   platforms.create(50, 100, 'platform2');
   platforms.setAll('body.immovable', true);
+}
+
+// add chest to the game
+function addChests() {
+  chests = game.add.physicsGroup();
+  var chest = chests.create(0, 591, 'cofreCerrado');
+  chests.setAll('body.immovable', true);
 }
 
 // create a single animated item and add to screen
@@ -55,7 +68,7 @@ function createItem(left, top, image) {
 // create the winning badge and add to screen
 function createBadge() {
   badges = game.add.physicsGroup();
-  var badge = badges.create(750, 400, 'badge');
+  var badge = badges.create(15, 420, 'badge');
   badge.animations.add('spin');
   badge.animations.play('spin', 10, true);
 }
@@ -70,13 +83,26 @@ function itemHandler(player, item) {
     currentScore = currentScore + 30;
   } else if (item.key == "jetpack") {
     player.loadTexture(playerjp.texture);
-    player.body.gravity.y = 350;
+    player.body.gravity.y = 315;
+  } else if (item.key == "llave") {
+    tieneLlave = true;
   } else {
     currentScore = currentScore + 10;
   }
-  if (currentScore >= winningScore && !mochila) {
+  if (currentScore >= winningScore && !cBadge) {
       createBadge();
-      mochila=true;
+      cBadge=true;
+  }
+}
+
+// when the player collects the chest
+function chestHandler(player, chest) {
+  if(!cAbierto && tieneLlave){
+    console.log(chest);
+    var chest2 = chests.create(-50, -50, 'cofreAbierto');
+    chest.loadTexture(chest2.texture);
+    createItem(10, 540, 'jetpack');
+    cAbierto = true;
   }
 }
 
@@ -98,6 +124,8 @@ window.onload = function () {
     //Load images
     game.load.image('platform', 'platform_1.png');
     game.load.image('platform2', 'platform_2.png');
+    game.load.image('cofreAbierto', 'cofre-abierto.png');
+    game.load.image('cofreCerrado', 'cofre-cerrado.png');
 
     
     //Load spritesheets
@@ -107,21 +135,23 @@ window.onload = function () {
     game.load.spritesheet('badge', 'badge.png', 42, 54);
     game.load.spritesheet('poison', 'poison.png', 32, 32);
     game.load.spritesheet('star', 'star.png', 32, 32);
+    game.load.spritesheet('llave', 'llave.png', 50, 30);
     game.load.spritesheet('jetpack', 'jetpack.png', 38, 44);
   }
 
   // initial game set up
   function create() {
-    player = game.add.sprite(50, 600, 'player');
+    player = game.add.sprite(120, 600, 'player');
     playerjp = game.add.sprite(-50, -50, 'playerjp');
     player.animations.add('walk');
     player.anchor.setTo(0.5, 0.5);
     game.physics.arcade.enable(player);
     player.body.collideWorldBounds = true;
-    player.body.gravity.y = 550;
+    player.body.gravity.y = 500;
 
     addItems();
     addPlatforms();
+    addChests();
 
     cursors = game.input.keyboard.createCursorKeys();
     jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -134,6 +164,7 @@ window.onload = function () {
   function update() {
     text.text = "SCORE: " + currentScore;
     game.physics.arcade.collide(player, platforms);
+    game.physics.arcade.collide(player, chests, chestHandler);
     game.physics.arcade.overlap(player, items, itemHandler);
     game.physics.arcade.overlap(player, badges, badgeHandler);
     player.body.velocity.x = 0;
@@ -155,8 +186,12 @@ window.onload = function () {
       player.animations.stop();
     }
     
-    if (jumpButton.isDown && (player.body.onFloor() || player.body.touching.down)) {
+    if (jumpButton.isDown && (player.body.onFloor() || player.body.touching.down || saltoDoble)) {
       player.body.velocity.y = -400;
+      saltoDoble = false;
+    }
+    if (botaAlada && (player.body.onFloor() || player.body.touching.down)){
+        saltoDoble = true;
     }
     // when the player winw the game
     if (won) {
